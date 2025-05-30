@@ -120,24 +120,24 @@
         </div>
     </div>
 
+    <!-- Load Firebase configuration from external file -->
+    <script src="firebase-config.js"></script>
+
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
         // Import Cloud Firestore SDK
         import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
 
-        // Your web app's Firebase configuration (USING THE ONE FROM test.html)
-        const firebaseConfig = {
-            apiKey: "AIzaSyAOBvOeOWkRWWssJ0V0c-ge4j_YgNT2_Z4", // Replace with your actual API key if different
-            authDomain: "resource-sharing-center.firebaseapp.com",
-            projectId: "resource-sharing-center",
-            storageBucket: "resource-sharing-center.firebasestorage.app",
-            messagingSenderId: "846208459960",
-            appId: "1:846208459960:web:b874dc71135c1217be004d",
-            measurementId: "G-W606DJX5LW" // Optional: if you use Google Analytics
-        };
+        // Firebase configuration is now loaded from firebase-config.js
+        // and available as a global variable `firebaseConfig`
 
         // Initialize Firebase
+        // firebaseConfig should be defined globally by firebase-config.js
+        if (typeof firebaseConfig === 'undefined') {
+            console.error("Firebase config is not loaded. Make sure firebase-config.js is present and loaded correctly.");
+            alert("Firebase配置加载失败，请检查控制台。");
+        }
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app); // Initialize Firestore
 
