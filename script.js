@@ -280,10 +280,6 @@ async function loadPasswords() {
     }
 }
 
-// Note: The 'messages' array is client-side only and not persistent.
-// For a real application, messages would be fetched from/sent to a server.
-// let messages = []; // This was used by the old updateMessagesList
-
 function openPasswordModal(resourceId) {
     currentResource = resourceId;
     document.getElementById('passwordModal').style.display = 'block';
@@ -349,79 +345,8 @@ function showDownloadLinks() {
     document.getElementById('successPage').style.display = 'block'; // 再显示下载页面
 }
 
-function submitMessage() {
-    const userName = document.getElementById('userName').value.trim();
-    const userMessage = document.getElementById('userMessage').value.trim();
-
-    if (!userName || !userMessage) {
-        alert('请填写完整的昵称和留言内容！');
-        return;
-    }
-
-    const newMessage = {
-        author: userName,
-        content: userMessage,
-        time: new Date().toLocaleString('zh-CN', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-        })
-    };
-    
-    // Dynamically create and prepend the new message element to the list
-    const messagesListEl = document.getElementById('messagesList');
-    const newMessageEl = document.createElement('div');
-    newMessageEl.className = 'message-item';
-    newMessageEl.innerHTML = `
-        <div class="message-meta">
-            <span class="message-author">👤 ${newMessage.author}</span>
-            <span class="message-time">${newMessage.time}</span>
-        </div>
-        <div class="message-content">${newMessage.content}</div>
-    `;
-
-    const h3MessagesTitle = messagesListEl.querySelector('h3');
-    if (h3MessagesTitle) {
-         h3MessagesTitle.insertAdjacentElement('afterend', newMessageEl);
-    } else {
-        // Fallback if h3 is not found, though it should be there
-        messagesListEl.insertBefore(newMessageEl, messagesListEl.firstChild);
-    }
-
-    document.getElementById('userName').value = '';
-    document.getElementById('userMessage').value = '';
-
-    showSuccessNotification();
-}
-
-// The old updateMessagesList function is removed as messages are added dynamically.
-// If you needed to load messages from a persistent source (e.g., server),
-// a function like that would be used to render them.
-
-function showSuccessNotification() {
-    const notification = document.createElement('div');
-    notification.className = 'success-notification';
-    notification.innerHTML = '✅ 留言提交成功！我们会尽快处理您的需求。';
-    
-    const messageForm = document.querySelector('.message-form');
-    // Insert before the message form itself, but within the message-board
-    messageForm.parentNode.insertBefore(notification, messageForm);
-
-    notification.style.display = 'block';
-
-    setTimeout(() => {
-        if (notification.parentNode) { // Check if still in DOM
-            notification.remove();
-        }
-    }, 3000);
-}
-
 document.addEventListener('DOMContentLoaded', function() {
     loadPasswords();
-    // Initial messages are hardcoded in HTML. If messages were dynamic,
-    // you would call a function here to load and display them.
 });
 
 document.addEventListener('keydown', async function(event) { // Made async

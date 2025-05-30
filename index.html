@@ -73,40 +73,14 @@
                 <div class="form-group">
                     <textarea id="userMessage" class="form-textarea" placeholder="请描述您需要的资源类型、名称等详细信息..." rows="4"></textarea>
                 </div>
-                <button class="btn btn-gradient" onclick="submitMessage()">
+                <button class="btn btn-gradient" id="submitMessageBtn">
                     <span>📝 提交留言</span>
                 </button>
             </div>
 
             <div class="messages-list" id="messagesList">
                 <h3>📋 最新留言</h3>
-                <div class="message-item">
-                    <div class="message-meta">
-                        <span class="message-author">🎯 资源猎手</span>
-                        <span class="message-time">2024-05-30 10:30</span>
-                    </div>
-                    <div class="message-content">希望能分享一些Python机器学习的教程资源，最好是中文版的，谢谢！</div>
-                    <div class="admin-reply">
-                        <span class="admin-tag">管理员回复</span>
-                        <span class="reply-content">已收到您的需求，会尽快整理相关资源！</span>
-                    </div>
-                </div>
-
-                <div class="message-item">
-                    <div class="message-meta">
-                        <span class="message-author">📸 摄影爱好者</span>
-                        <span class="message-time">2024-05-29 16:45</span>
-                    </div>
-                    <div class="message-content">求Adobe Lightroom和Photoshop的最新版本，用于照片后期处理。</div>
-                </div>
-
-                <div class="message-item">
-                    <div class="message-meta">
-                        <span class="message-author">🎵 音乐发烧友</span>
-                        <span class="message-time">2024-05-29 14:20</span>
-                    </div>
-                    <div class="message-content">希望能有更多古典音乐的无损资源，特别是贝多芬和莫扎特的作品。</div>
-                </div>
+                <!-- 留言将由Firebase动态加载 -->
             </div>
         </div>
 
@@ -143,6 +117,110 @@
             </div>
         </div>
     </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Firebase配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyAOBvOeOWkRWWssJ0V0c-ge4j_YgNT2_Z4",
+            authDomain: "resource-sharing-center.firebaseapp.com",
+            projectId: "resource-sharing-center",
+            storageBucket: "resource-sharing-center.firebasestorage.app",
+            messagingSenderId: "846208459960",
+            appId: "1:846208459960:web:b874dc71135c1217be004d",
+            measurementId: "G-W606DJX5LW"
+        };
+
+        // 导入Firebase模块
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
+
+        // 初始化Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const messagesRef = collection(db, "messages");
+
+        // 提交留言
+        document.getElementById('submitMessageBtn').addEventListener('click', async () => {
+            const userName = document.getElementById('userName').value.trim();
+            const userMessage = document.getElementById('userMessage').value.trim();
+
+            if (!userName || !userMessage) {
+                alert('请填写完整的昵称和留言内容！');
+                return;
+            }
+
+            try {
+                await addDoc(messagesRef, {
+                    author: userName,
+                    content: userMessage,
+                    timestamp: serverTimestamp()
+                });
+
+                // 清空表单
+                document.getElementById('userName').value = '';
+                document.getElementById('userMessage').value = '';
+
+                // 显示成功通知
+                showSuccessNotification();
+            } catch (error) {
+                console.error("提交留言失败: ", error);
+                alert('留言提交失败，请稍后再试');
+            }
+        });
+
+        // 实时加载留言
+        const q = query(messagesRef, orderBy("timestamp", "desc"));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const messagesList = document.getElementById('messagesList');
+            // 清空现有留言（保留标题）
+            messagesList.innerHTML = '<h3>📋 最新留言</h3>';
+            
+            snapshot.forEach((doc) => {
+                const messageData = doc.data();
+                const messageItem = document.createElement('div');
+                messageItem.className = 'message-item';
+                
+                // 格式化时间戳
+                const timestamp = messageData.timestamp?.toDate 
+                    ? new Date(messageData.timestamp.toDate()).toLocaleString('zh-CN', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    })
+                    : '刚刚';
+                
+                messageItem.innerHTML = `
+                    <div class="message-meta">
+                        <span class="message-author">👤 ${messageData.author}</span>
+                        <span class="message-time">${timestamp}</span>
+                    </div>
+                    <div class="message-content">${messageData.content}</div>
+                `;
+                messagesList.appendChild(messageItem);
+            });
+        });
+
+        // 显示成功通知
+        function showSuccessNotification() {
+            const notification = document.createElement('div');
+            notification.className = 'success-notification';
+            notification.innerHTML = '✅ 留言提交成功！我们会尽快处理您的需求。';
+            
+            const messageForm = document.querySelector('.message-form');
+            messageForm.parentNode.insertBefore(notification, messageForm);
+
+            notification.style.display = 'block';
+
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 3000);
+        }
+    </script>
 
     <script src="script.js"></script>
 </body>
