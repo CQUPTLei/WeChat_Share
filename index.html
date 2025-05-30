@@ -209,7 +209,7 @@
         }
 
         .success-page {
-            display: none;
+            display: block;
             text-align: center;
             padding: 40px;
         }
@@ -930,6 +930,10 @@
                  linksContainer.innerHTML = '<p>暂无此资源的下载链接配置。</p>';
             }
             document.getElementById('successPage').style.display = 'block';
+			//
+			// 在显示模态框之前，先把内部内容区显示出来
+			document.querySelector('#successPage .success-page').style.display = 'block';
+			document.getElementById('successPage').style.display = 'block';
         }
 
         function submitMessage() {
