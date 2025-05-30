@@ -234,12 +234,12 @@ function md5_js(string) {
 async function verifyPasswordWithPythonAlgorithm(inputPassword, encryptedData) {
     try {
         const data = JSON.parse(atob(encryptedData));
-        const { hash: storedHash, salt, iterations } = data; // Renamed 'hash' to 'storedHash'
+        const { hash: storedHash, salt, iterations } = data;
         
         let combined = inputPassword + salt;
         
         for (let i = 0; i < iterations; i++) {
-            combined = await sha256_crypto(combined); // Use Web Crypto SHA256
+            combined = await sha256_crypto(combined);
             combined = combined.split('').reverse().join('');
             if (i % 2 === 0) {
                 combined = combined.toUpperCase();
@@ -248,7 +248,7 @@ async function verifyPasswordWithPythonAlgorithm(inputPassword, encryptedData) {
             }
         }
         
-        const finalHash = md5_js(combined).substring(0, 16); // Use JS MD5
+        const finalHash = md5_js(combined).substring(0, 16);
         
         return finalHash === storedHash;
     } catch (e) {
@@ -280,6 +280,81 @@ async function loadPasswords() {
     }
 }
 
+// Firebase配置和初始化
+const firebaseConfig = {
+    apiKey: "AIzaSyAOBvOeOWkRWWssJ0V0c-ge4j_YgNT2_Z4",
+    authDomain: "resource-sharing-center.firebaseapp.com",
+    projectId: "resource-sharing-center",
+    storageBucket: "resource-sharing-center.firebasestorage.app",
+    messagingSenderId: "846208459960",
+    appId: "1:846208459960:web:b874dc71135c1217be004d",
+    measurementId: "G-W606DJX5LW"
+};
+
+// 初始化Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// 获取留言集合引用
+const messagesRef = db.collection("messages");
+
+// 实时监听留言变化
+function setupMessagesListener() {
+    messagesRef.orderBy("timestamp", "desc").onSnapshot(snapshot => {
+        const messagesListEl = document.getElementById('messagesList');
+        // 保留标题，清空其他内容
+        const h3 = messagesListEl.querySelector('h3');
+        messagesListEl.innerHTML = '';
+        messagesListEl.appendChild(h3);
+        
+        if (snapshot.empty) {
+            const noMessage = document.createElement('p');
+            noMessage.textContent = '还没有留言，快来发表第一条吧！';
+            messagesListEl.appendChild(noMessage);
+            return;
+        }
+        
+        snapshot.forEach(doc => {
+            const msg = doc.data();
+            const messageItem = document.createElement('div');
+            messageItem.className = 'message-item';
+            
+            // 格式化时间
+            const timestamp = msg.timestamp ? 
+                new Date(msg.timestamp.toDate()).toLocaleString('zh-CN', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }) : '未知时间';
+            
+            messageItem.innerHTML = `
+                <div class="message-meta">
+                    <span class="message-author">👤 ${msg.author}</span>
+                    <span class="message-time">${timestamp}</span>
+                </div>
+                <div class="message-content">${msg.content}</div>
+            `;
+            
+            // 如果有管理员回复
+            if (msg.reply) {
+                const adminReply = document.createElement('div');
+                adminReply.className = 'admin-reply';
+                adminReply.innerHTML = `
+                    <span class="admin-tag">管理员回复</span>
+                    <span class="reply-content">${msg.reply}</span>
+                `;
+                messageItem.appendChild(adminReply);
+            }
+            
+            messagesListEl.appendChild(messageItem);
+        });
+    }, error => {
+        console.error('留言监听失败:', error);
+    });
+}
+
 function openPasswordModal(resourceId) {
     currentResource = resourceId;
     document.getElementById('passwordModal').style.display = 'block';
@@ -298,7 +373,7 @@ function closeSuccessPage() {
     currentResource = '';
 }
 
-async function verifyPassword() { // Made async
+async function verifyPassword() {
     const inputPassword = document.getElementById('passwordInput').value;
     const encryptedData = encryptedPasswords[currentResource];
     
@@ -334,25 +409,70 @@ function showDownloadLinks() {
             linkElement.href = link.url;
             linkElement.className = 'download-link';
             linkElement.textContent = link.name;
-            linkElement.target = '_blank'; // Open in new tab
+            linkElement.target = '_blank';
             linksContainer.appendChild(linkElement);
         });
     } else {
          linksContainer.innerHTML = '<p>暂无此资源的下载链接配置。</p>';
     }
-     // 修复：确保成功页面正确显示
-    document.getElementById('passwordModal').style.display = 'none'; // 先关闭密码输入框
-    document.getElementById('successPage').style.display = 'block'; // 再显示下载页面
+    document.getElementById('passwordModal').style.display = 'none';
+    document.getElementById('successPage').style.display = 'block';
+}
+
+async function submitMessage() {
+    const userName = document.getElementById('userName').value.trim();
+    const userMessage = document.getElementById('userMessage').value.trim();
+
+    if (!userName || !userMessage) {
+        alert('请填写完整的昵称和留言内容！');
+        return;
+    }
+
+    try {
+        // 提交留言到Firebase
+        await messagesRef.add({
+            author: userName,
+            content: userMessage,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        // 清空表单
+        document.getElementById('userName').value = '';
+        document.getElementById('userMessage').value = '';
+        
+        showSuccessNotification();
+    } catch (error) {
+        console.error('提交留言失败:', error);
+        alert('提交留言失败，请重试！');
+    }
+}
+
+function showSuccessNotification() {
+    const notification = document.createElement('div');
+    notification.className = 'success-notification';
+    notification.innerHTML = '✅ 留言提交成功！我们会尽快处理您的需求。';
+    
+    const messageForm = document.querySelector('.message-form');
+    messageForm.parentNode.insertBefore(notification, messageForm);
+
+    notification.style.display = 'block';
+
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 3000);
 }
 
 document.addEventListener('DOMContentLoaded', function() {
     loadPasswords();
+    setupMessagesListener();
 });
 
-document.addEventListener('keydown', async function(event) { // Made async
+document.addEventListener('keydown', async function(event) {
     if (document.getElementById('passwordModal').style.display === 'block') {
         if (event.key === 'Enter') {
-            await verifyPassword(); // await the async function
+            await verifyPassword();
         } else if (event.key === 'Escape') {
             closeModal();
         }
@@ -375,9 +495,5 @@ window.onclick = function(event) {
 }
 
 document.getElementById('passwordInput').addEventListener('input', function(e) {
-    // The original Python script's password logic allows any characters for the password itself,
-    // although the input field is for a "4-digit password".
-    // If strictly 4 digits are required, you might re-add:
-    // e.target.value = e.target.value.replace(/\D/g, '');
-    // For now, it matches the flexibility of your current setup.
+    // 允许任意字符输入
 });
