@@ -902,7 +902,7 @@
             if (await verifyPasswordWithPythonAlgorithm(inputPassword, encryptedData)) {
                 console.log('密码验证成功');
                 showDownloadLinks();
-				closeModal();
+				//closeModal();
             } else {
                 console.log('密码验证失败');
                 document.getElementById('errorMessage').textContent = '密码错误，请重新输入';
@@ -929,11 +929,9 @@
             } else {
                  linksContainer.innerHTML = '<p>暂无此资源的下载链接配置。</p>';
             }
-            document.getElementById('successPage').style.display = 'block';
-			//
-			// 在显示模态框之前，先把内部内容区显示出来
-			document.querySelector('#successPage .success-page').style.display = 'block';
-			document.getElementById('successPage').style.display = 'block';
+             // 修复：确保成功页面正确显示
+			document.getElementById('passwordModal').style.display = 'none'; // 先关闭密码输入框
+			document.getElementById('successPage').style.display = 'block'; // 再显示下载页面
         }
 
         function submitMessage() {
