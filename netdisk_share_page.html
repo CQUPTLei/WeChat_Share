@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>资源分享中心</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .resources {
+            padding: 40px;
+        }
+
+        .resource-item {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+
+        .resource-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+
+        .resource-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .resource-desc {
+            color: #7f8c8d;
+            font-size: 0.95em;
+            margin-bottom: 15px;
+        }
+
+        .resource-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9em;
+        }
+
+        .resource-size {
+            color: #3498db;
+            font-weight: 500;
+        }
+
+        .resource-date {
+            color: #95a5a6;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: white;
+            margin: 10% auto;
+            padding: 0;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .modal-header h3 {
+            font-size: 1.4em;
+            font-weight: 500;
+        }
+
+        .modal-body {
+            padding: 30px;
+            text-align: center;
+        }
+
+        .password-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
+            font-size: 1.2em;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: border-color 0.3s ease;
+            letter-spacing: 3px;
+        }
+
+        .password-input:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(79, 172, 254, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #6c757d;
+            border: 1px solid #dee2e6;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 0.9em;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .success-page {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .success-icon {
+            font-size: 4em;
+            color: #27ae60;
+            margin-bottom: 20px;
+        }
+
+        .download-links {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .download-link {
+            display: block;
+            background: white;
+            color: #2c3e50;
+            text-decoration: none;
+            padding: 15px 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            transition: all 0.3s ease;
+        }
+
+        .download-link:hover {
+            background: #4facfe;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.3);
+        }
+
+        .footer {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        /* 留言板样式 */
+        .message-board {
+            background: #f8f9fa;
+            margin: 0 40px 40px 40px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        }
+
+        .message-header {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            padding: 30px;
+            text-align: center;
+            color: #2c3e50;
+        }
+
+        .message-header h2 {
+            font-size: 1.8em;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .message-header p {
+            font-size: 1em;
+            opacity: 0.8;
+        }
+
+        .message-form {
+            padding: 30px;
+            background: white;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .form-textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
+            font-size: 1em;
+            resize: vertical;
+            min-height: 100px;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-textarea:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .btn-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            width: 100%;
+        }
+
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-gradient span {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .messages-list {
+            padding: 30px;
+            background: #f8f9fa;
+        }
+
+        .messages-list h3 {
+            color: #2c3e50;
+            margin-bottom: 25px;
+            font-size: 1.3em;
+            font-weight: 600;
+        }
+
+        .message-item {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            border-left: 4px solid #4facfe;
+            transition: transform 0.2s ease;
+        }
+
+        .message-item:hover {
+            transform: translateX(5px);
+        }
+
+        .message-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+
+        .message-author {
+            font-weight: 600;
+            color: #4facfe;
+        }
+
+        .message-time {
+            color: #95a5a6;
+        }
+
+        .message-content {
+            color: #2c3e50;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .admin-reply {
+            background: #e8f5e8;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 10px;
+            border-left: 3px solid #27ae60;
+        }
+
+        .admin-tag {
+            background: #27ae60;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 500;
+            margin-right: 8px;
+        }
+
+        .reply-content {
+            color: #2c3e50;
+            font-size: 0.9em;
+        }
+
+        .success-notification {
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌟 资源分享中心</h1>
+            <p>精选优质资源，安全快速下载</p>
+        </div>
+
+        <div class="resources" id="resourcesList">
+            <div class="resource-item" onclick="openPasswordModal('resource1')">
+                <div class="resource-title">📱 手机应用合集</div>
+                <div class="resource-desc">包含各类实用手机应用，已去广告优化版本</div>
+                <div class="resource-info">
+                    <span class="resource-size">大小: 2.3 GB</span>
+                    <span class="resource-date">更新: 2024-05-28</span>
+                </div>
+            </div>
+
+            <div class="resource-item" onclick="openPasswordModal('resource2')">
+                <div class="resource-title">🎬 高清电影资源</div>
+                <div class="resource-desc">最新热门电影，4K蓝光原盘质量</div>
+                <div class="resource-info">
+                    <span class="resource-size">大小: 15.6 GB</span>
+                    <span class="resource-date">更新: 2024-05-27</span>
+                </div>
+            </div>
+
+            <div class="resource-item" onclick="openPasswordModal('resource3')">
+                <div class="resource-title">📚 学习资料包</div>
+                <div class="resource-desc">编程、设计、语言学习等各类教程资料</div>
+                <div class="resource-info">
+                    <span class="resource-size">大小: 8.9 GB</span>
+                    <span class="resource-date">更新: 2024-05-26</span>
+                </div>
+            </div>
+
+            <div class="resource-item" onclick="openPasswordModal('resource4')">
+                <div class="resource-title">🎵 无损音乐专辑</div>
+                <div class="resource-desc">FLAC格式无损音质，涵盖各种音乐风格</div>
+                <div class="resource-info">
+                    <span class="resource-size">大小: 12.4 GB</span>
+                    <span class="resource-date">更新: 2024-05-25</span>
+                </div>
+            </div>
+
+            <div class="resource-item" onclick="openPasswordModal('resource5')">
+                <div class="resource-title">💻 办公软件套装</div>
+                <div class="resource-desc">Adobe全家桶、Office套件等专业软件</div>
+                <div class="resource-info">
+                    <span class="resource-size">大小: 6.7 GB</span>
+                    <span class="resource-date">更新: 2024-05-24</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 留言板块 -->
+        <div class="message-board">
+            <div class="message-header">
+                <h2>💬 资源留言板</h2>
+                <p>需要什么资源？在这里告诉我们吧！</p>
+            </div>
+            
+            <div class="message-form">
+                <div class="form-group">
+                    <input type="text" id="userName" class="form-input" placeholder="请输入您的昵称">
+                </div>
+                <div class="form-group">
+                    <textarea id="userMessage" class="form-textarea" placeholder="请描述您需要的资源类型、名称等详细信息..." rows="4"></textarea>
+                </div>
+                <button class="btn btn-gradient" onclick="submitMessage()">
+                    <span>📝 提交留言</span>
+                </button>
+            </div>
+
+            <div class="messages-list" id="messagesList">
+                <h3>📋 最新留言</h3>
+                <div class="message-item">
+                    <div class="message-meta">
+                        <span class="message-author">🎯 资源猎手</span>
+                        <span class="message-time">2024-05-30 10:30</span>
+                    </div>
+                    <div class="message-content">希望能分享一些Python机器学习的教程资源，最好是中文版的，谢谢！</div>
+                    <div class="admin-reply">
+                        <span class="admin-tag">管理员回复</span>
+                        <span class="reply-content">已收到您的需求，会尽快整理相关资源！</span>
+                    </div>
+                </div>
+
+                <div class="message-item">
+                    <div class="message-meta">
+                        <span class="message-author">📸 摄影爱好者</span>
+                        <span class="message-time">2024-05-29 16:45</span>
+                    </div>
+                    <div class="message-content">求Adobe Lightroom和Photoshop的最新版本，用于照片后期处理。</div>
+                </div>
+
+                <div class="message-item">
+                    <div class="message-meta">
+                        <span class="message-author">🎵 音乐发烧友</span>
+                        <span class="message-time">2024-05-29 14:20</span>
+                    </div>
+                    <div class="message-content">希望能有更多古典音乐的无损资源，特别是贝多芬和莫扎特的作品。</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>📧 如有问题请联系管理员 | 🔒 所有资源均经过安全检测</p>
+        </div>
+    </div>
+
+    <!-- 密码验证模态框 -->
+    <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🔐 请输入访问密码</h3>
+            </div>
+            <div class="modal-body">
+                <input type="password" id="passwordInput" class="password-input" placeholder="请输入4位数字密码" maxlength="4">
+                <div class="error-message" id="errorMessage">密码错误，请重新输入</div>
+                <div class="modal-buttons">
+                    <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+                    <button class="btn btn-primary" onclick="verifyPassword()">确认</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 成功页面 -->
+    <div id="successPage" class="modal">
+        <div class="modal-content">
+            <div class="success-page">
+                <div class="success-icon">✅</div>
+                <h3>密码正确！</h3>
+                <p>以下是您的下载链接：</p>
+                <div class="download-links" id="downloadLinks">
+                    <!-- 链接将通过JavaScript动态生成 -->
+                </div>
+                <button class="btn btn-primary" onclick="closeSuccessPage()">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentResource = '';
+        let encryptedPasswords = {};
+        
+        // 资源下载链接配置
+        const resourceLinks = {
+            'resource1': [
+                { name: '百度网盘下载', url: 'https://pan.baidu.com/s/example1' },
+                { name: '蓝奏云下载', url: 'https://lanzoux.com/example1' },
+                { name: '天翼云下载', url: 'https://cloud.189.cn/example1' }
+            ],
+            'resource2': [
+                { name: '百度网盘下载', url: 'https://pan.baidu.com/s/example2' },
+                { name: '阿里云盘下载', url: 'https://aliyundrive.com/example2' }
+            ],
+            'resource3': [
+                { name: '百度网盘下载', url: 'https://pan.baidu.com/s/example3' },
+                { name: '夸克网盘下载', url: 'https://pan.quark.cn/example3' }
+            ],
+            'resource4': [
+                { name: '百度网盘下载', url: 'https://pan.baidu.com/s/example4' },
+                { name: '115网盘下载', url: 'https://115.com/example4' }
+            ],
+            'resource5': [
+                { name: '百度网盘下载', url: 'https://pan.baidu.com/s/example5' },
+                { name: '迅雷云盘下载', url: 'https://pan.xunlei.com/example5' }
+            ]
+        };
+
+        // 密码解密函数（基于多重哈希变换）
+        function decryptPassword(encryptedData) {
+            try {
+                const data = JSON.parse(atob(encryptedData));
+                const { hash, salt, iterations } = data;
+                
+                return {
+                    verify: function(inputPassword) {
+                        let result = inputPassword + salt;
+                        for (let i = 0; i < iterations; i++) {
+                            result = btoa(result).split('').reverse().join('');
+                            result = Array.from(result).map(c => 
+                                String.fromCharCode(c.charCodeAt(0) ^ (i % 256))
+                            ).join('');
+                        }
+                        const finalHash = btoa(result).replace(/[^a-zA-Z0-9]/g, '').substring(0, 16);
+                        return finalHash === hash;
+                    }
+                };
+            } catch (e) {
+                console.error('密码解密失败:', e);
+                return { verify: () => false };
+            }
+        }
+
+        // 加载加密密码文件
+        async function loadPasswords() {
+            try {
+                const response = await fetch('./passwords.txt');
+                if (!response.ok) {
+                    throw new Error('无法加载密码文件');
+                }
+                const text = await response.text();
+                const lines = text.trim().split('\n');
+                
+                lines.forEach(line => {
+                    const [resourceId, encryptedData] = line.split('=');
+                    if (resourceId && encryptedData) {
+                        encryptedPasswords[resourceId.trim()] = encryptedData.trim();
+                    }
+                });
+                
+                console.log('密码文件加载成功');
+            } catch (error) {
+                console.error('加载密码文件失败:', error);
+                // 如果加载失败，使用备用验证方式
+                alert('密码文件加载失败，请检查文件是否存在');
+            }
+        }
+
+        // 留言功能相关的变量
+        let messages = [];
+
+        function openPasswordModal(resourceId) {
+            currentResource = resourceId;
+            document.getElementById('passwordModal').style.display = 'block';
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('passwordInput').focus();
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        function closeModal() {
+            document.getElementById('passwordModal').style.display = 'none';
+            currentResource = '';
+        }
+
+        function closeSuccessPage() {
+            document.getElementById('successPage').style.display = 'none';
+            currentResource = '';
+        }
+
+        function verifyPassword() {
+            const inputPassword = document.getElementById('passwordInput').value;
+            const encryptedData = encryptedPasswords[currentResource];
+            
+            if (!encryptedData) {
+                document.getElementById('errorMessage').textContent = '密码配置错误';
+                document.getElementById('errorMessage').style.display = 'block';
+                return;
+            }
+
+            const passwordValidator = decryptPassword(encryptedData);
+            
+            if (passwordValidator.verify(inputPassword)) {
+                // 密码正确，显示下载链接
+                closeModal();
+                showDownloadLinks();
+            } else {
+                // 密码错误，显示错误信息
+                document.getElementById('errorMessage').textContent = '密码错误，请重新输入';
+                document.getElementById('errorMessage').style.display = 'block';
+                document.getElementById('passwordInput').value = '';
+                document.getElementById('passwordInput').focus();
+            }
+        }
+
+        function showDownloadLinks() {
+            const links = resourceLinks[currentResource];
+            const linksContainer = document.getElementById('downloadLinks');
+            
+            linksContainer.innerHTML = '';
+            links.forEach(link => {
+                const linkElement = document.createElement('a');
+                linkElement.href = link.url;
+                linkElement.className = 'download-link';
+                linkElement.textContent = link.name;
+                linkElement.target = '_blank';
+                linksContainer.appendChild(linkElement);
+            });
+
+            document.getElementById('successPage').style.display = 'block';
+        }
+
+        function submitMessage() {
+            const userName = document.getElementById('userName').value.trim();
+            const userMessage = document.getElementById('userMessage').value.trim();
+
+            if (!userName || !userMessage) {
+                alert('请填写完整的昵称和留言内容！');
+                return;
+            }
+
+            // 创建新留言对象
+            const newMessage = {
+                author: userName,
+                content: userMessage,
+                time: new Date().toLocaleString('zh-CN', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                })
+            };
+
+            // 添加到留言数组
+            messages.unshift(newMessage);
+
+            // 更新留言列表显示
+            updateMessagesList();
+
+            // 清空表单
+            document.getElementById('userName').value = '';
+            document.getElementById('userMessage').value = '';
+
+            // 显示成功提示
+            showSuccessNotification();
+        }
+
+        function updateMessagesList() {
+            const messagesList = document.getElementById('messagesList');
+            const messagesHtml = messages.map(message => `
+                <div class="message-item">
+                    <div class="message-meta">
+                        <span class="message-author">👤 ${message.author}</span>
+                        <span class="message-time">${message.time}</span>
+                    </div>
+                    <div class="message-content">${message.content}</div>
+                </div>
+            `).join('');
+
+            messagesList.innerHTML = `
+                <h3>📋 最新留言</h3>
+                ${messagesHtml}
+                <div class="message-item">
+                    <div class="message-meta">
+                        <span class="message-author">🎯 资源猎手</span>
+                        <span class="message-time">2024-05-30 10:30</span>
+                    </div>
+                    <div class="message-content">希望能分享一些Python机器学习的教程资源，最好是中文版的，谢谢！</div>
+                    <div class="admin-reply">
+                        <span class="admin-tag">管理员回复</span>
+                        <span class="reply-content">已收到您的需求，会尽快整理相关资源！</span>
+                    </div>
+                </div>
+                <div class="message-item">
+                    <div class="message-meta">
+                        <span class="message-author">📸 摄影爱好者</span>
+                        <span class="message-time">2024-05-29 16:45</span>
+                    </div>
+                    <div class="message-content">求Adobe Lightroom和Photoshop的最新版本，用于照片后期处理。</div>
+                </div>
+                <div class="message-item">
+                    <div class="message-meta">
+                        <span class="message-author">🎵 音乐发烧友</span>
+                        <span class="message-time">2024-05-29 14:20</span>
+                    </div>
+                    <div class="message-content">希望能有更多古典音乐的无损资源，特别是贝多芬和莫扎特的作品。</div>
+                </div>
+            `;
+        }
+
+        function showSuccessNotification() {
+            // 创建成功提示元素
+            const notification = document.createElement('div');
+            notification.className = 'success-notification';
+            notification.innerHTML = '✅ 留言提交成功！我们会尽快处理您的需求。';
+            notification.style.display = 'block';
+
+            // 插入到留言表单前面
+            const messageForm = document.querySelector('.message-form');
+            messageForm.insertBefore(notification, messageForm.firstChild);
+
+            // 3秒后自动消失
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPasswords();
+        });
+
+        // 键盘事件处理
+        document.addEventListener('keydown', function(event) {
+            if (document.getElementById('passwordModal').style.display === 'block') {
+                if (event.key === 'Enter') {
+                    verifyPassword();
+                } else if (event.key === 'Escape') {
+                    closeModal();
+                }
+            } else if (document.getElementById('successPage').style.display === 'block') {
+                if (event.key === 'Escape') {
+                    closeSuccessPage();
+                }
+            }
+        });
+
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            const passwordModal = document.getElementById('passwordModal');
+            const successModal = document.getElementById('successPage');
+            
+            if (event.target === passwordModal) {
+                closeModal();
+            } else if (event.target === successModal) {
+                closeSuccessPage();
+            }
+        }
+
+        // 只允许输入数字
+        document.getElementById('passwordInput').addEventListener('input', function(e) {
+            e.target.value = e.target.value.replace(/\D/g, '');
+        });
+    </script>
+</body>
+</html>
