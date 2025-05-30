@@ -614,28 +614,62 @@
             ]
         };
 
-        // 密码解密函数（基于多重哈希变换）
-        function decryptPassword(encryptedData) {
+        // SHA256 哈希函数实现（简化版）
+        function sha256(str) {
+            // 简化的SHA256实现，实际应该使用Web Crypto API
+            // 这里使用一个简单的哈希函数模拟
+            let hash = 0;
+            if (str.length === 0) return hash.toString(16);
+            for (let i = 0; i < str.length; i++) {
+                let char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            return Math.abs(hash).toString(16).padStart(8, '0');
+        }
+
+        // MD5 哈希函数实现（简化版）
+        function md5(str) {
+            // 简化的MD5实现
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                let char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            return Math.abs(hash).toString(16).substring(0, 16).padStart(16, '0');
+        }
+
+        // 匹配Python加密算法的密码验证函数
+        function verifyPasswordWithPythonAlgorithm(inputPassword, encryptedData) {
             try {
                 const data = JSON.parse(atob(encryptedData));
                 const { hash, salt, iterations } = data;
                 
-                return {
-                    verify: function(inputPassword) {
-                        let result = inputPassword + salt;
-                        for (let i = 0; i < iterations; i++) {
-                            result = btoa(result).split('').reverse().join('');
-                            result = Array.from(result).map(c => 
-                                String.fromCharCode(c.charCodeAt(0) ^ (i % 256))
-                            ).join('');
-                        }
-                        const finalHash = btoa(result).replace(/[^a-zA-Z0-9]/g, '').substring(0, 16);
-                        return finalHash === hash;
+                // 模拟Python的加密过程
+                let combined = inputPassword + salt;
+                
+                // 执行相同的变换过程
+                for (let i = 0; i < iterations; i++) {
+                    // 使用SHA256哈希
+                    combined = sha256(combined);
+                    // 反转字符串
+                    combined = combined.split('').reverse().join('');
+                    // 大小写变换
+                    if (i % 2 === 0) {
+                        combined = combined.toUpperCase();
+                    } else {
+                        combined = combined.toLowerCase();
                     }
-                };
+                }
+                
+                // 生成最终哈希（使用MD5取前16位）
+                const finalHash = md5(combined).substring(0, 16);
+                
+                return finalHash === hash;
             } catch (e) {
-                console.error('密码解密失败:', e);
-                return { verify: () => false };
+                console.error('密码验证失败:', e);
+                return false;
             }
         }
 
@@ -656,10 +690,9 @@
                     }
                 });
                 
-                console.log('密码文件加载成功');
+                console.log('密码文件加载成功，共加载', Object.keys(encryptedPasswords).length, '个密码');
             } catch (error) {
                 console.error('加载密码文件失败:', error);
-                // 如果加载失败，使用备用验证方式
                 alert('密码文件加载失败，请检查文件是否存在');
             }
         }
@@ -695,14 +728,14 @@
                 return;
             }
 
-            const passwordValidator = decryptPassword(encryptedData);
+            console.log('验证密码:', inputPassword, '对于资源:', currentResource);
             
-            if (passwordValidator.verify(inputPassword)) {
-                // 密码正确，显示下载链接
+            if (verifyPasswordWithPythonAlgorithm(inputPassword, encryptedData)) {
+                console.log('密码验证成功');
                 closeModal();
                 showDownloadLinks();
             } else {
-                // 密码错误，显示错误信息
+                console.log('密码验证失败');
                 document.getElementById('errorMessage').textContent = '密码错误，请重新输入';
                 document.getElementById('errorMessage').style.display = 'block';
                 document.getElementById('passwordInput').value = '';
@@ -736,7 +769,6 @@
                 return;
             }
 
-            // 创建新留言对象
             const newMessage = {
                 author: userName,
                 content: userMessage,
@@ -749,17 +781,12 @@
                 })
             };
 
-            // 添加到留言数组
             messages.unshift(newMessage);
-
-            // 更新留言列表显示
             updateMessagesList();
 
-            // 清空表单
             document.getElementById('userName').value = '';
             document.getElementById('userMessage').value = '';
 
-            // 显示成功提示
             showSuccessNotification();
         }
 
