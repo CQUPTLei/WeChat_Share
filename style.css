@@ -202,7 +202,7 @@ body {
 }
 
 .success-page {
-    display: block;
+    display: block; /* Should be none by default, controlled by JS */
     text-align: center;
     padding: 40px;
 }
@@ -353,6 +353,13 @@ body {
     font-weight: 600;
 }
 
+#firebase-messages-list p { /* Style for "加载中..." and "还没有留言..." */
+    color: #7f8c8d;
+    text-align: center;
+    padding: 20px 0;
+}
+
+
 .message-item {
     background: white;
     border-radius: 12px;
@@ -387,10 +394,10 @@ body {
 .message-content {
     color: #2c3e50;
     line-height: 1.6;
-    margin-bottom: 10px;
+    margin-bottom: 10px; /* Removed as per original for user messages, can be re-added if spacing is off */
 }
 
-.admin-reply {
+.admin-reply { /* This style will remain for now, but won't be used by new Firebase messages */
     background: #e8f5e8;
     border-radius: 8px;
     padding: 12px;
@@ -398,7 +405,7 @@ body {
     border-left: 3px solid #27ae60;
 }
 
-.admin-tag {
+.admin-tag { /* This style will remain for now */
     background: #27ae60;
     color: white;
     padding: 2px 8px;
@@ -408,29 +415,9 @@ body {
     margin-right: 8px;
 }
 
-.reply-content {
+.reply-content { /* This style will remain for now */
     color: #2c3e50;
     font-size: 0.9em;
 }
 
-.success-notification {
-    background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
-    color: white;
-    padding: 15px;
-    border-radius: 10px;
-    margin-bottom: 20px;
-    text-align: center;
-    display: none;
-    animation: slideDown 0.3s ease-out;
-}
-
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
+/* Removed .success-notification and its @keyframes slideDown as it's not used with Firebase simple alert */

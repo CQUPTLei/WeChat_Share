@@ -65,22 +65,24 @@
                 <h2>💬 资源留言板</h2>
                 <p>需要什么资源？在这里告诉我们吧！</p>
             </div>
-            
+
             <div class="message-form">
                 <div class="form-group">
-                    <input type="text" id="userName" class="form-input" placeholder="请输入您的昵称">
+                    <input type="text" id="userName" class="form-input" placeholder="请输入您的昵称" required>
                 </div>
                 <div class="form-group">
-                    <textarea id="userMessage" class="form-textarea" placeholder="请描述您需要的资源类型、名称等详细信息..." rows="4"></textarea>
+                    <textarea id="userMessage" class="form-textarea" placeholder="请描述您需要的资源类型、名称等详细信息..." rows="4" required></textarea>
                 </div>
-                <button class="btn btn-gradient" onclick="submitMessage()">
+                <button class="btn btn-gradient" id="submitUserMessageBtn">
                     <span>📝 提交留言</span>
                 </button>
             </div>
 
-            <div class="messages-list" id="messagesList">
+            <div class="messages-list">
                 <h3>📋 最新留言</h3>
-                <!-- 留言将由Firebase动态加载 -->
+                <div id="firebase-messages-list">
+                    <p>加载中...</p>
+                </div>
             </div>
         </div>
 
@@ -118,9 +120,98 @@
         </div>
     </div>
 
-    <!-- 添加Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js"></script>
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+        // Import Cloud Firestore SDK
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
+
+        // Your web app's Firebase configuration (USING THE ONE FROM test.html)
+        const firebaseConfig = {
+            apiKey: "AIzaSyAOBvOeOWkRWWssJ0V0c-ge4j_YgNT2_Z4", // Replace with your actual API key if different
+            authDomain: "resource-sharing-center.firebaseapp.com",
+            projectId: "resource-sharing-center",
+            storageBucket: "resource-sharing-center.firebasestorage.app",
+            messagingSenderId: "846208459960",
+            appId: "1:846208459960:web:b874dc71135c1217be004d",
+            measurementId: "G-W606DJX5LW" // Optional: if you use Google Analytics
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app); // Initialize Firestore
+
+        const userNameInput = document.getElementById('userName');
+        const userMessageInput = document.getElementById('userMessage');
+        const submitUserMessageButton = document.getElementById('submitUserMessageBtn');
+        const messagesDisplayArea = document.getElementById('firebase-messages-list');
+
+        // Handle submitting new messages
+        submitUserMessageButton.addEventListener('click', async () => {
+            const author = userNameInput.value.trim();
+            const message = userMessageInput.value.trim();
+
+            if (author === '' || message === '') {
+                alert('昵称和留言内容都不能为空！');
+                return;
+            }
+
+            try {
+                // Add message to 'siteMessages' collection (or 'messages' if you prefer)
+                await addDoc(collection(db, "siteMessages"), { // Using "siteMessages" to distinguish from test.html's "messages"
+                    author: author,
+                    content: message,
+                    timestamp: serverTimestamp() // Use server timestamp
+                });
+                // console.log("留言已成功提交！"); // You can uncomment for debugging
+                alert("留言已成功提交！");
+                userNameInput.value = ''; // Clear input fields
+                userMessageInput.value = ''; // Clear input fields
+            } catch (e) {
+                console.error("提交留言时发生错误: ", e);
+                alert("提交留言失败，请检查控制台。");
+            }
+        });
+
+        // Listen for real-time message updates
+        const q = query(collection(db, "siteMessages"), orderBy("timestamp", "desc")); // Order by timestamp descending
+
+        onSnapshot(q, (snapshot) => {
+            messagesDisplayArea.innerHTML = ''; // Clear existing messages
+            if (snapshot.empty) {
+                messagesDisplayArea.innerHTML = '<p>还没有留言，快来发表第一条吧！</p>';
+                return;
+            }
+
+            snapshot.forEach((doc) => {
+                const messageData = doc.data();
+                const messageItem = document.createElement('div');
+                messageItem.classList.add('message-item');
+
+                // Format timestamp to be more like the original static style
+                const timestamp = messageData.timestamp ? 
+                                  new Date(messageData.timestamp.toDate()).toLocaleString('zh-CN', {
+                                      year: 'numeric', month: '2-digit', day: '2-digit', 
+                                      hour: '2-digit', minute: '2-digit'
+                                  }) : '未知时间';
+                
+                // Using the structure from index.html's original message items
+                messageItem.innerHTML = `
+                    <div class="message-meta">
+                        <span class="message-author">👤 ${messageData.author}</span>
+                        <span class="message-time">${timestamp}</span>
+                    </div>
+                    <div class="message-content">${messageData.content}</div>
+                `;
+                // Note: Admin replies would require a more complex data structure and UI in Firebase
+                messagesDisplayArea.appendChild(messageItem);
+            });
+        }, (error) => {
+            console.error("监听留言时发生错误: ", error);
+            messagesDisplayArea.innerHTML = '<p>加载留言失败，请检查网络连接或控制台错误。</p>';
+        });
+    </script>
+
     <script src="script.js"></script>
 </body>
 </html>
